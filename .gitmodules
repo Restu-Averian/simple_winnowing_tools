@@ -1,3 +1,6 @@
 [submodule "lib"]
 	path = lib
 	url = https://github.com/sidos-TA/lib-sidos.git
+[submodule "src/helpers/winnowing"]
+	path = src/helpers/winnowing
+	url = https://github.com/Restu-Averian/Winnowing-Algorithm.git

@@ -1,125 +1,130 @@
-import { Affix, Col, Form, Layout, Row, Space, Spin } from "antd";
-import { useState } from "react";
-import { responseSuccess } from "../lib/src/helpers/formatRespons";
-import useFetch from "../lib/src/helpers/useFetch";
-import FingerPrintWinnowing from "./FingerPrintWinnowing";
+import { Col, Form, Grid, Layout, Row } from "antd";
 import FormWinnowing from "./FormWinnowing";
-import GraphKGramWinnowing from "./GraphKGramWinnowing";
-import KGramWinnowing from "./KGramWinnowing";
+import {
+  arrKGramHandler,
+  jaccardSimilarityHandler,
+  preProcessingText,
+  winnowingHandler,
+} from "./helpers/winnowing/Winnowing";
+import DataBanding from "./components/DataBanding";
+import WrapperComp from "./WrapperComp";
+import BtnSidos from "../lib/src/components/BtnSidos";
+import { Fragment, useState } from "react";
+import ModalDataBinding from "./components/ModalDataBinding";
 import TableWinnowing from "./TableWinnowing";
-import WindowWinnowing from "./WindowWinnowing";
+import TitlePage from "./components/TitlePage";
 
 function App() {
+  const { xs } = Grid.useBreakpoint();
+
+  const [openModal, setOpenModal] = useState(false);
+  const [winnowing, setWinnowing] = useState({
+    data: [],
+    total: 0,
+    kGram: [],
+  });
+
   const [FormWinnowingInstance] = Form.useForm();
-  const [state, setState] = useState({
-    arrDatas: [],
-    isLoading: false,
-    arrKGram: [],
-    windowJdlMhs: [],
-    fingerPrintHandler: [],
-  });
+  const [FormDataBanding] = Form.useForm();
 
-  const [stateDsn, setStateDsn] = useState({
-    arrPenelitian: [],
-  });
+  const valueDataBanding = Form.useWatch("arrBanding", FormDataBanding);
 
-  const fetch = useFetch();
+  const calculateWinnowing = () => {
+    const { judul, kGram, window } = FormWinnowingInstance.getFieldsValue();
 
-  const getWinnowing = async (nip = "") => {
-    setState((prev) => ({
-      ...prev,
-      isLoading: true,
-    }));
-    await fetch({
-      endpoint: "getJudulPenelitian",
-      payload: {
-        judul: FormWinnowingInstance?.getFieldValue("judul"),
-        kGram: FormWinnowingInstance?.getFieldValue("kGram"),
-        window: FormWinnowingInstance?.getFieldValue("window"),
-        ...(nip && {
-          nip,
-        }),
-      },
-    })
-      ?.then((response) => {
-        const res = responseSuccess(response);
-        if (res?.status === 200) {
-          if (nip) {
-            setStateDsn((prev) => ({
-              ...prev,
-              arrPenelitian: res?.data?.arrPenelitianDosen,
-            }));
-          } else {
-            setState((prev) => ({
-              ...prev,
-              arrDatas: res?.data?.arrWinowing,
-              arrKGram: res?.data?.arrKGram,
-              windowJdlMhs: res?.data?.arrWindow,
-              fingerPrintHandler: res?.data?.fingerPrintHandler,
-            }));
-          }
-        }
-      })
-      ?.finally(() => {
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-        }));
+    FormWinnowingInstance?.validateFields()?.then(() => {
+      const winnowingResult = winnowingHandler({
+        kGramCount: kGram,
+        strJudulMhs: judul,
+        windowCount: window,
+        arrJudulDosen: valueDataBanding?.map((data) => data?.text),
       });
-  };
 
-  const submitHandler = () => {
-    FormWinnowingInstance?.validateFields()
-      ?.then(async () => {
-        await getWinnowing();
-      })
-      ?.catch(() => {
-        window.scrollTo({
-          top: 10,
-          behavior: "smooth",
+      const eachWinnowing = [];
+
+      valueDataBanding?.forEach((data) => {
+        eachWinnowing?.push({
+          text: data?.text,
+          result: jaccardSimilarityHandler({
+            kGramCount: kGram,
+            windowCount: window,
+            strJudulMhs: preProcessingText(judul),
+            strJudulPenelitian: preProcessingText(data?.text),
+          }),
+          kGram: arrKGramHandler({
+            str: preProcessingText(data?.text),
+            kGramCount: kGram,
+          }),
         });
       });
-  };
 
+      setWinnowing((prev) => ({
+        ...prev,
+        total: winnowingResult,
+        data: eachWinnowing,
+      }));
+    });
+  };
   return (
     <Layout>
-      <Row align="middle" justify="center" gutter={16}>
-        <Col span={12}>
-          <Affix offsetTop={30} offsetBottom={30}>
+      <Row
+        align="top"
+        justify="center"
+        gutter={[16, 32]}
+        style={{ padding: xs ? 12 : 30 }}
+      >
+        <WrapperComp style={{ padding: 0, marginBottom: 24 }}>
+          <Col span={24}>
+            <TitlePage />
+          </Col>
+        </WrapperComp>
+        <Col span={xs ? 24 : 12}>
+          <WrapperComp>
             <FormWinnowing
+              winnowing={winnowing}
+              setWinnowing={setWinnowing}
               FormWinnowingInstance={FormWinnowingInstance}
-              state={state}
-              submitHandler={submitHandler}
+              totalWinnowing={winnowing?.total}
             />
-          </Affix>
+          </WrapperComp>
         </Col>
-        <Col span={12}>
-          <Spin spinning={state?.isLoading}>
-            <Row gutter={[16, 32]}>
-              <Col span={24}>
-                <TableWinnowing
-                  state={state}
-                  stateDsn={stateDsn}
-                  getWinnowing={getWinnowing}
-                  FormWinnowingInstance={FormWinnowingInstance}
-                />
-              </Col>
-              <Col span={24}>
-                <GraphKGramWinnowing state={state} />
-              </Col>
-              <Col span={24}>
-                <KGramWinnowing state={state} />
-              </Col>
 
-              <Col span={24}>
-                <WindowWinnowing state={state} />
-              </Col>
-              <Col span={24}>
-                <FingerPrintWinnowing state={state} />
-              </Col>
-            </Row>
-          </Spin>
+        <Col span={xs ? 24 : 12}>
+          <WrapperComp title="Data Banding">
+            <DataBanding form={FormDataBanding} />
+            {valueDataBanding?.length >= 3 && (
+              <BtnSidos position="center" onClick={() => setOpenModal(true)}>
+                See More
+              </BtnSidos>
+            )}
+            <ModalDataBinding
+              form={FormDataBanding}
+              visible={openModal}
+              onClose={() => setOpenModal(false)}
+            />
+          </WrapperComp>
         </Col>
+
+        <Col span={24}>
+          <WrapperComp>
+            <BtnSidos
+              position="center"
+              onClick={() => {
+                calculateWinnowing();
+              }}
+              type="primary"
+            >
+              Check Winnowing
+            </BtnSidos>
+          </WrapperComp>
+        </Col>
+        {winnowing?.data?.length > 0 ? (
+          <Col span={24}>
+            <TableWinnowing arrDatas={winnowing?.data} />
+          </Col>
+        ) : (
+          <Fragment />
+        )}
       </Row>
     </Layout>
   );

@@ -1,0 +1,17 @@
+.wrapper-data-banding {
+  border: 1px solid #4096ff;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  height: 300px;
+  padding: 10px;
+  border-radius: 10px;
+}
+.wrapper-data-banding::-webkit-scrollbar {
+  width: 5px;
+  background-color: #dfedff;
+  border-radius: 20px;
+}
+.wrapper-data-banding::-webkit-scrollbar-thumb {
+  background-color: #4096ff;
+  border-radius: 20px;
+}
