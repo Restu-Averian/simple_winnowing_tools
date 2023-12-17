@@ -110,6 +110,7 @@ function App() {
             <BtnSidos
               position="center"
               onClick={() => {
+                FormWinnowingInstance.submit();
                 calculateWinnowing();
               }}
               type="primary"

@@ -15,6 +15,9 @@ const FormWinnowing = ({
         Total Winnowing : {totalWinnowing}
       </Typography.Title>
       <FormSidos
+        scrollToFirstError={{
+          behavior: "smooth",
+        }}
         form={FormWinnowingInstance}
         initialValues={{
           window: 11,

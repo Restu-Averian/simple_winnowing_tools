@@ -3,7 +3,13 @@ import DataBanding from "./DataBanding";
 
 const ModalDataBinding = ({ form, onClose, visible }) => {
   return (
-    <Modal open={visible} onCancel={onClose} title="Data Banding" width={1200}>
+    <Modal
+      open={visible}
+      onCancel={onClose}
+      title="Data Banding"
+      width={1200}
+      centered
+    >
       <DataBanding form={form} inModal />
     </Modal>
   );
