@@ -5,6 +5,7 @@ const ModalDataBinding = ({ form, onClose, visible }) => {
   return (
     <Modal
       open={visible}
+      onOk={onClose}
       onCancel={onClose}
       title="Data Banding"
       width={1200}
